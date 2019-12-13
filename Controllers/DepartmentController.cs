@@ -1,13 +1,13 @@
-﻿using DepartmentExample.Model;
+﻿using DeptEmployeesAPI.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
-
 
 
 namespace DepartmentExample.Controllers
@@ -58,7 +58,7 @@ namespace DepartmentExample.Controllers
                         if (departmentAlreadyAddedd == null)
                         {
                             Department department = new Department
-                            { 
+                            {
                                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                                 DeptName = reader.GetString(reader.GetOrdinal("DeptName")),
                                 Employees = new List<Employee>()
@@ -162,225 +162,123 @@ namespace DepartmentExample.Controllers
         [HttpPost]
 
         public async Task<IActionResult> Post([FromBody] Department department)
-
         {
-
             using (SqlConnection conn = Connection)
-
             {
-
                 conn.Open();
-
                 using (SqlCommand cmd = conn.CreateCommand())
-
                 {
-
                     cmd.CommandText = @"INSERT INTO Department (DeptName)
-
                                         OUTPUT INSERTED.Id
-
                                         VALUES (@departmentName)";
 
                     cmd.Parameters.Add(new SqlParameter("@departmentName", department.DeptName));
-
                     int newId = (int)cmd.ExecuteScalar();
-
                     department.Id = newId;
 
                     return CreatedAtRoute("GetDepartment", new { id = newId }, department);
-
                 }
-
             }
-
         }
 
 
 
         [HttpPut("{id}")]
-
         public async Task<IActionResult> Put([FromRoute] int id, [FromBody] Department department)
-
         {
-
             try
-
             {
-
                 using (SqlConnection conn = Connection)
-
                 {
-
                     conn.Open();
-
                     using (SqlCommand cmd = conn.CreateCommand())
-
                     {
-
                         cmd.CommandText = @"UPDATE Department
-
                                             SET DeptName = @deptName, 
-
-
-
                                             WHERE Id = @id";
-
                         cmd.Parameters.Add(new SqlParameter("@deptName", department.DeptName));
-
                         cmd.Parameters.Add(new SqlParameter("@id", id));
-
-
 
                         int rowsAffected = cmd.ExecuteNonQuery();
 
                         if (rowsAffected > 0)
-
                         {
-
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
-
                         }
-
                         throw new Exception("No rows affected");
-
                     }
-
                 }
-
             }
 
             catch (Exception)
-
             {
-
                 if (!DepartmentExist(id))
-
                 {
-
                     return NotFound();
-
                 }
-
                 else
-
                 {
-
                     throw;
-
                 }
-
             }
-
         }
 
 
 
         [HttpDelete("{id}")]
-
         public async Task<IActionResult> Delete([FromRoute] int id)
-
         {
-
             try
-
             {
-
                 using (SqlConnection conn = Connection)
-
                 {
-
                     conn.Open();
-
                     using (SqlCommand cmd = conn.CreateCommand())
-
                     {
-
                         cmd.CommandText = @"DELETE FROM Department WHERE Id = @id";
-
                         cmd.Parameters.Add(new SqlParameter("@id", id));
-
-
-
                         int rowsAffected = cmd.ExecuteNonQuery();
-
                         if (rowsAffected > 0)
-
                         {
-
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
-
                         }
-
                         throw new Exception("No rows affected");
-
                     }
-
                 }
-
             }
-
             catch (Exception)
-
             {
-
                 if (!DepartmentExist(id))
-
                 {
-
                     return NotFound();
-
                 }
-
                 else
-
                 {
-
                     throw;
-
                 }
-
             }
-
         }
 
 
 
         private bool DepartmentExist(int id)
-
         {
-
             using (SqlConnection conn = Connection)
-
             {
-
                 conn.Open();
-
                 using (SqlCommand cmd = conn.CreateCommand())
-
                 {
-
                     cmd.CommandText = @"
-
                         SELECT Id, DeptName 
-
                         FROM Department
-
                         WHERE Id = @id";
 
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
-
-
                     SqlDataReader reader = cmd.ExecuteReader();
-
                     return reader.Read();
-
                 }
-
             }
-
         }
-
     }
-
 }
